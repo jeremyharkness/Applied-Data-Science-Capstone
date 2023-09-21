@@ -76,7 +76,26 @@ def get_pie_chart(entered_site):
 @app.callback(Output(component_id='success-payload-scatter-chart', component_property='figure'),
               [Input(component_id='site-dropdown', component_property='value'), 
                Input(component_id='payload-slider', component_property='value')])
-def update_scatter_plot(selected_site, payload_range):
+
+# Updated scatter plot function to include success rates in the legend
+def updated_scatter_plot(selected_site, payload_range):
+    # Filter data based on selected site and payload range
+    if selected_site == 'ALL':
+        filtered_df = spacex_df[(spacex_df['Payload Mass (kg)'] >= payload_range[0]) & (spacex_df['Payload Mass (kg)'] <= payload_range[1])]
+    else:
+        filtered_df = spacex_df[(spacex_df['Launch Site'] == selected_site) & (spacex_df['Payload Mass (kg)'] >= payload_range[0]) & (spacex_df['Payload Mass (kg)'] <= payload_range[1])]
+    
+    # Calculate success rates for each Booster Version Category
+    success_rates = filtered_df.groupby('Booster Version Category')['class'].mean().to_dict()
+    
+    # Update the 'Booster Version Category' column to include success rates
+    filtered_df['Booster Version Category'] = filtered_df['Booster Version Category'].apply(lambda x: f"{x} (Success Rate: {success_rates[x]*100:.2f}%)")
+    
+    # Create a scatter plot
+    fig = px.scatter(filtered_df, x='Payload Mass (kg)', y='class', color='Booster Version Category', 
+                     title='Correlation between Payload and Success for different Booster Versions')
+    return fig
+def updated_scatter_plot(selected_site, payload_range):
     # Filter data based on selected site and payload range
     if selected_site == 'ALL':
         filtered_df = spacex_df[(spacex_df['Payload Mass (kg)'] >= payload_range[0]) & (spacex_df['Payload Mass (kg)'] <= payload_range[1])]
